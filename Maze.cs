@@ -1,172 +1,107 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
+using MazeGenerator.Enums;
 
 namespace MazeGenerator
 {
+	/// <summary>
+	/// Maze class with support for various maze generation algorithms and types.
+	/// Use MazeFactory for creating mazes with semantic factory methods.
+	/// </summary>
 	public class Maze
 	{
-		private readonly int _columnsCount;
-		private readonly int _rowsCount;
-		private readonly Random _random;
+		private readonly MazeGrid _grid;
 
-		public IReadOnlyList<IReadOnlyList<Cell>> Cells => _mazeCells;
+		/// <summary>
+		/// Gets the cells of the maze as a read-only collection.
+		/// </summary>
+		public IReadOnlyList<IReadOnlyList<Cell>> Cells => _grid.Cells;
 
-		private readonly List<List<Cell>> _mazeCells;
+		/// <summary>
+		/// Gets the width of the maze (number of columns).
+		/// </summary>
+		public int Width => _grid.Width;
 
+		/// <summary>
+		/// Gets the height of the maze (number of rows).
+		/// </summary>
+		public int Height => _grid.Height;
+
+		/// <summary>
+		/// Gets the configuration used to generate this maze.
+		/// </summary>
+		public MazeConfiguration Configuration => _grid.Configuration;
+
+		/// <summary>
+		/// Gets the underlying maze grid.
+		/// </summary>
+		public MazeGrid Grid => _grid;
+
+		/// <summary>
+		/// Creates a new maze with the specified dimensions.
+		/// Uses Eller's algorithm by default for backward compatibility.
+		/// </summary>
+		/// <param name="columnsCount">The number of columns (width).</param>
+		/// <param name="rowsCount">The number of rows (height).</param>
 		public Maze(int columnsCount, int rowsCount)
 		{
-			_columnsCount = columnsCount;
-			_rowsCount = rowsCount;
-			_random = new Random();
-
-			_mazeCells = new List<List<Cell>>(rowsCount);
-
-			for (int i = 0; i < _rowsCount; i++)
-				_mazeCells.Add(CreateLine(i));
+			var config = MazeConfiguration.Default(columnsCount, rowsCount);
+			_grid = new MazeGrid(config);
 		}
 
-		private List<Cell> CreateLine(int rowIndex)
+		/// <summary>
+		/// Creates a new maze with the specified dimensions and algorithm.
+		/// </summary>
+		/// <param name="columnsCount">The number of columns (width).</param>
+		/// <param name="rowsCount">The number of rows (height).</param>
+		/// <param name="algorithm">The algorithm to use for generation.</param>
+		public Maze(int columnsCount, int rowsCount, MazeAlgorithmType algorithm)
 		{
-			List<Cell> resultLine = rowIndex == 0
-				? CreateFirstLine()
-				: CreateCommonLine(row: rowIndex);
-
-			if (rowIndex == _rowsCount - 1)
-				PolishLastLine(resultLine);
-
-			return resultLine;
+			var config = new MazeConfiguration
+			{
+				Width = columnsCount,
+				Height = rowsCount,
+				Algorithm = algorithm
+			};
+			_grid = new MazeGrid(config);
 		}
 
-		private void PolishLastLine(List<Cell> line)
+		/// <summary>
+		/// Creates a new maze with the specified dimensions, algorithm, and seed.
+		/// </summary>
+		/// <param name="columnsCount">The number of columns (width).</param>
+		/// <param name="rowsCount">The number of rows (height).</param>
+		/// <param name="algorithm">The algorithm to use for generation.</param>
+		/// <param name="seed">The random seed for reproducible generation.</param>
+		public Maze(int columnsCount, int rowsCount, MazeAlgorithmType algorithm, int seed)
 		{
-			for (int i = 0; i < _columnsCount - 1; i++)
+			var config = new MazeConfiguration
 			{
-				var cell = line[i];
-				var nextCell = line[i + 1];
-
-				if (cell.Set != nextCell.Set)
-					cell.Right = false;
-			}
-
-			int set = line[0].Set;
-
-			foreach (var cell in line)
-			{
-				cell.Set = set;
-				cell.Bottom = true;
-			}
+				Width = columnsCount,
+				Height = rowsCount,
+				Algorithm = algorithm,
+				Seed = seed
+			};
+			_grid = new MazeGrid(config);
 		}
 
-		private List<Cell> CreateCommonLine(int row)
+		/// <summary>
+		/// Creates a new maze with the specified configuration.
+		/// </summary>
+		/// <param name="configuration">The maze configuration.</param>
+		public Maze(MazeConfiguration configuration)
 		{
-			List<Cell> line = CopyAndPrepareLine(_mazeCells[row - 1]);
-			AddVerticalWalls(line);
-			AddHorizontalWalls(line);
-
-			return line;
+			_grid = new MazeGrid(configuration);
 		}
 
-		private List<Cell> CreateFirstLine()
+		/// <summary>
+		/// Gets a cell at the specified position.
+		/// </summary>
+		/// <param name="row">The row index (0-based).</param>
+		/// <param name="column">The column index (0-based).</param>
+		/// <returns>The cell at the specified position.</returns>
+		public Cell GetCell(int row, int column)
 		{
-			List<Cell> line = new List<Cell>(_columnsCount);
-
-			for (int i = 0; i < _columnsCount; i++)
-			{
-				var cell = new Cell(i);
-
-				if (i == 0)
-					cell.Left = true;
-				else if (i == _columnsCount - 1)
-					cell.Right = true;
-
-				cell.Top = true;
-
-				line.Add(cell);
-			}
-
-			AddVerticalWalls(line);
-			AddHorizontalWalls(line);
-
-			return line;
-		}
-
-		private void AddHorizontalWalls(List<Cell> line)
-		{
-			for (int i = 0; i < line.Count; i++)
-			{
-				if (_random.Next(0, 2) > 0 &&
-					CanAddBottomToCellOfSet(line[i]))
-				{
-					line[i].Bottom = true;
-				}
-			}
-
-			bool CanAddBottomToCellOfSet(Cell cell) =>
-				!line.Where(c => c.Set == cell.Set && c != cell).All(c => c.Bottom);
-		}
-
-		private void AddVerticalWalls(List<Cell> line)
-		{
-			for (int i = 0; i < line.Count - 1; i++)
-			{
-				var cell = line[i];
-				var nextCell = line[i + 1];
-
-				if (cell.Set == nextCell.Set || _random.Next(0, 2) > 0)
-					cell.Right = true;
-				else
-					UpdateSetForLine(nextCell.Set, cell.Set, line);
-			}
-		}
-
-		private List<Cell> CopyAndPrepareLine(List<Cell> from)
-		{
-			List<Cell> line = new List<Cell>(_columnsCount);
-
-			foreach (var prevCell in from)
-			{
-				var cell = new Cell(prevCell);
-				line.Add(cell);
-			}
-
-			for (int i = 0; i < line.Count; i++)
-			{
-				if (line[i].Set == -1)
-					line[i].Set = GetEmptySetNumber(line);
-
-				if (i == 0)
-					line[i].Left = true;
-
-				if (i == _columnsCount - 1)
-					line[i].Right = true;
-			}
-
-			return line;
-		}
-
-		private int GetEmptySetNumber(List<Cell> line)
-		{
-			int setNumber = 0;
-
-			while (setNumber < _columnsCount)
-			{
-				if (line.Any(c => c.Set == setNumber))
-					setNumber++;
-				else
-					break;
-			}
-
-			return setNumber;
-		}
-
-		private void UpdateSetForLine(int oldSet, int newSet, List<Cell> line)
-		{
-			foreach (var cell in line)
-			{
-				if (cell.Set == oldSet)
-					cell.Set = newSet;
-			}
+			return _grid.GetCell(row, column);
 		}
 	}
 }
