@@ -1,0 +1,24 @@
+{
+  "name": "com.mazegenerator.library",
+  "version": "2.0.0",
+  "displayName": "Maze Generator",
+  "description": "A comprehensive, production-ready C# library for generating, modifying, rendering, and solving mazes. Includes 5 generation algorithms (Recursive Backtracker, Kruskal's, Prim's, Eller's, Wilson's), 3 maze types (Perfect, Braided, WithRooms), 2 rendering formats (ASCII, SVG), and 2 solving algorithms (BFS, DFS).",
+  "unity": "2019.4",
+  "keywords": [
+    "maze",
+    "generator",
+    "algorithm",
+    "procedural",
+    "pathfinding",
+    "labyrinth",
+    "dungeon",
+    "generation"
+  ],
+  "author": {
+    "name": "Andrey Faraponov",
+    "url": "https://github.com/andreyfaraponov"
+  },
+  "category": "Tools",
+  "dependencies": {},
+  "samples": []
+}
