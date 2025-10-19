@@ -1,100 +1,17 @@
-# MazeGenerator - Complete Documentation
+# MazeGenerator
 
-<div align="center">
-
-**A comprehensive, production-ready C# library for generating, modifying, rendering, and solving mazes**
-
-[![.NET Standard 2.0](https://img.shields.io/badge/.NET%20Standard-2.0-blue)](https://docs.microsoft.com/en-us/dotnet/standard/net-standard)
-[![C# 7.3+](https://img.shields.io/badge/C%23-7.3+-purple)](https://docs.microsoft.com/en-us/dotnet/csharp/)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-
-</div>
-
----
-
-## 📑 Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Generation Algorithms](#generation-algorithms)
-- [Maze Types & Modifiers](#maze-types--modifiers)
-- [Rendering](#rendering)
-- [Maze Solving](#maze-solving)
-- [API Reference](#api-reference)
-- [Examples](#examples)
-- [Performance](#performance)
-- [Best Practices](#best-practices)
-- [Architecture](#architecture)
-- [Troubleshooting](#troubleshooting)
-- [License](#license)
-
----
-
-## Overview
-
-MazeGenerator is a powerful and flexible C# library that provides everything you need for maze generation, modification, visualization, and pathfinding. Perfect for games, educational software, procedural content generation, and research.
-
-**Version:** 2.0.0  
-**Target Framework:** .NET Standard 2.0  
-**Language:** C# 7.3+
-
-### Why MazeGenerator?
-
-✅ **5 Professional Algorithms** - Each optimized for different use cases  
-✅ **3 Maze Types** - Perfect, Braided, and WithRooms  
-✅ **2 Rendering Formats** - ASCII (console) and SVG (web/print)  
-✅ **2 Solving Algorithms** - BFS for shortest path, DFS for fast finding  
-✅ **Production Ready** - Clean architecture, well-tested, documented  
-✅ **Extensible Design** - Easy to add custom algorithms, modifiers, renderers  
-✅ **Zero Dependencies** - Pure C#, no external packages  
-
----
+A flexible C# library for generating, rendering, and solving mazes.
 
 ## Features
 
-### 🔄 Generation Algorithms
-
-| Algorithm | Speed | Memory | Best For |
-|-----------|-------|--------|----------|
-| **Eller** | ⚡⚡⚡ | 🟢 Low | Large mazes, general purpose |
-| **Recursive Backtracker** | ⚡⚡ | 🟡 Medium | Puzzles, challenging mazes |
-| **Prim** | ⚡ | 🟡 Medium | Exploration, many branches |
-| **Recursive Division** | ⚡⚡⚡ | 🟢 Low | Dungeons, room-based layouts |
-| **Aldous-Broder** | 🐌 | 🟡 Medium | Research, unbiased generation |
-
-### 🎨 Maze Types
-
-- **Perfect Mazes** - Single path between any two points (no loops)
-- **Braided Mazes** - Multiple paths with configurable loop density
-- **WithRooms Mazes** - Dungeon-style with rectangular open chambers
-
-### 🖼️ Rendering
-
-- **ASCII Renderer** - Console-friendly with Unicode box drawing
-- **SVG Renderer** - Scalable vector graphics for web/print
-- **Path Visualization** - Highlight solutions overlaid on maze
-- **Configurable Appearance** - Colors, sizes, markers, themes
-
-### 🧭 Maze Solving
-
-- **Breadth-First Search (BFS)** - Guarantees shortest path
-- **Depth-First Search (DFS)** - Fast pathfinding
-- **Path Visualization** - Render solutions with custom styling
-
-### 🏗️ Architecture
-
-- **Factory Pattern** - Semantic creation methods (CreateChallenging, CreateDungeon, etc.)
-- **Strategy Pattern** - Pluggable algorithms and modifiers
-- **Clean Separation** - Algorithms, modifiers, rendering decoupled
-- **Extensible** - Easy to add custom components
-
----
+**5 Generation Algorithms** - Eller, Recursive Backtracker, Prim, Recursive Division, Aldous-Broder  
+**3 Maze Types** - Perfect, Braided, WithRooms  
+**2 Rendering Formats** - ASCII and SVG  
+**2 Solving Algorithms** - BFS and DFS  
 
 ## Installation
 
-### From Source
+### As .NET Library
 
 ```bash
 git clone <repository-url>
@@ -102,17 +19,15 @@ cd MazeGenerator
 dotnet build
 ```
 
-### As Library Reference
+### As Unity Package
 
-```bash
-dotnet add reference path/to/MazeGenerator.dll
-```
+1. Open Unity Editor → **Window** → **Package Manager**
+2. Click **+** → **Add package from git URL**
+3. Enter: `https://github.com/andreyfaraponov/MazeGenerator.git`
 
-### As NuGet Package (if published)
+Or manually copy the folder into your Unity project's `Assets` directory.
 
-```bash
-dotnet add package MazeGenerator
-```
+**Requirements:** Unity 2019.4+, .NET Standard 2.0
 
 ---
 
