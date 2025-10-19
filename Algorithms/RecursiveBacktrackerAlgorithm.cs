@@ -43,10 +43,10 @@ namespace MazeGenerator.Algorithms
 				for (int x = 0; x < _width; x++)
 				{
 					var cell = cells[y][x];
-					cell.Left = (x == 0);
-					cell.Right = (x == _width - 1);
-					cell.Top = (y == 0);
-					cell.Bottom = (y == _height - 1);
+					cell.Left = true;
+					cell.Right = true;
+					cell.Top = true;
+					cell.Bottom = true;
 					cell.Set = 0;
 				}
 			}
@@ -121,9 +121,7 @@ namespace MazeGenerator.Algorithms
 			for (int i = directions.Count - 1; i > 0; i--)
 			{
 				int j = _random.Next(i + 1);
-				var temp = directions[i];
-				directions[i] = directions[j];
-				directions[j] = temp;
+				(directions[i], directions[j]) = (directions[j], directions[i]);
 			}
 			
 			return directions;

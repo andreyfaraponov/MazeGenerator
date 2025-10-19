@@ -54,12 +54,11 @@ namespace MazeGenerator.Algorithms
 				var cell = line[i];
 				cell.Set = i;
 				
-				if (i == 0)
-					cell.Left = true;
-				else if (i == _columnsCount - 1)
-					cell.Right = true;
-				
+				// Initialize all walls to true
+				cell.Left = true;
+				cell.Right = true;
 				cell.Top = true;
+				cell.Bottom = true;
 			}
 		}
 		
@@ -78,11 +77,11 @@ namespace MazeGenerator.Algorithms
 				if (cell.Set == -1)
 					cell.Set = GetEmptySetNumber(line);
 				
-				if (i == 0)
-					cell.Left = true;
-				
-				if (i == _columnsCount - 1)
-					cell.Right = true;
+				// Initialize all walls to true
+				cell.Left = true;
+				cell.Right = true;
+				cell.Top = prevCell.Bottom;  // Synchronize with previous row's bottom wall
+				cell.Bottom = true;
 			}
 		}
 		
@@ -94,26 +93,46 @@ namespace MazeGenerator.Algorithms
 				var nextCell = line[i + 1];
 				
 				if (cell.Set == nextCell.Set || _random.Next(0, 2) > 0)
+				{
 					cell.Right = true;
+					nextCell.Left = true;
+				}
 				else
+				{
+					cell.Right = false;
+					nextCell.Left = false;
 					UpdateSetForLine(nextCell.Set, cell.Set, line);
+				}
 			}
 		}
 		
 		private void AddHorizontalWalls(List<Cell> line)
 		{
+			// First pass: randomly decide to add bottom walls
 			for (int i = 0; i < line.Count; i++)
 			{
-				if (_random.Next(0, 2) > 0 && CanAddBottomToCellOfSet(line[i], line))
+				if (_random.Next(0, 2) > 0)
 				{
-					line[i].Bottom = true;
+					line[i].Bottom = true;  // Keep the wall
+				}
+				else
+				{
+					line[i].Bottom = false;  // Remove the wall (create passage)
 				}
 			}
-		}
-		
-		private bool CanAddBottomToCellOfSet(Cell cell, List<Cell> line)
-		{
-			return !line.Where(c => c.Set == cell.Set && c != cell).All(c => c.Bottom);
+			
+			// Second pass: ensure each set has at least one opening down
+			var sets = line.GroupBy(c => c.Set);
+			foreach (var set in sets)
+			{
+				// If all cells in this set have bottom walls, remove one randomly
+				if (set.All(c => c.Bottom))
+				{
+					var cellsInSet = set.ToList();
+					var randomCell = cellsInSet[_random.Next(cellsInSet.Count)];
+					randomCell.Bottom = false;
+				}
+			}
 		}
 		
 		private void PolishLastLine(List<Cell> line)
@@ -124,7 +143,10 @@ namespace MazeGenerator.Algorithms
 				var nextCell = line[i + 1];
 				
 				if (cell.Set != nextCell.Set)
+				{
 					cell.Right = false;
+					nextCell.Left = false;
+				}
 			}
 			
 			int set = line[0].Set;
