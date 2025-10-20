@@ -11,157 +11,186 @@ namespace MazeGenerator.Algorithms
 	public class EllerAlgorithm : IMazeAlgorithm
 	{
 		public string Name => "Eller's Algorithm";
-		
-		public string Description => "Generates perfect mazes row by row. Memory efficient and suitable for large mazes. Creates mazes with a good balance of characteristics.";
-		
-		private Random _random;
+
+		public string Description =>
+			"Generates perfect mazes row by row. Memory efficient and suitable for large mazes. Creates mazes with a good balance of characteristics.";
+
+
 		private int _columnsCount;
 		private int _rowsCount;
-		
+		private Random _random;
+		private List<List<Cell>> _cells;
+
+
 		public void Generate(List<List<Cell>> cells, MazeConfiguration config)
 		{
+			_cells = cells;
 			_columnsCount = config.Width;
 			_rowsCount = config.Height;
 			_random = config.Seed.HasValue ? new Random(config.Seed.Value) : new Random();
-			
-			for (int rowIndex = 0; rowIndex < _rowsCount; rowIndex++)
-			{
-				var line = cells[rowIndex];
-				
-				if (rowIndex == 0)
-				{
-					InitializeFirstLine(line);
-				}
-				else
-				{
-					PrepareLineFromPrevious(line, cells[rowIndex - 1]);
-				}
-				
-				AddVerticalWalls(line);
-				AddHorizontalWalls(line);
-				
-				if (rowIndex == _rowsCount - 1)
-				{
-					PolishLastLine(line);
-				}
-			}
+
+			InitializeCells(cells);
+
+			for (int i = 0; i < _rowsCount; i++)
+				CreateLine(cells, i);
 		}
-		
-		private void InitializeFirstLine(List<Cell> line)
+
+		private void InitializeCells(List<List<Cell>> cells)
 		{
-			for (int i = 0; i < _columnsCount; i++)
+			for (int y = 0; y < _rowsCount; y++)
 			{
-				var cell = line[i];
-				cell.Set = i;
-				
-				// Initialize all walls to true
-				cell.Left = true;
-				cell.Right = true;
-				cell.Top = true;
-				cell.Bottom = true;
-			}
-		}
-		
-		private void PrepareLineFromPrevious(List<Cell> line, List<Cell> previousLine)
-		{
-			for (int i = 0; i < _columnsCount; i++)
-			{
-				var cell = line[i];
-				var prevCell = previousLine[i];
-				
-				if (prevCell.Bottom)
-					cell.Set = -1;
-				else
-					cell.Set = prevCell.Set;
-				
-				if (cell.Set == -1)
-					cell.Set = GetEmptySetNumber(line);
-				
-				// Initialize all walls to true
-				cell.Left = true;
-				cell.Right = true;
-				cell.Top = prevCell.Bottom;  // Synchronize with previous row's bottom wall
-				cell.Bottom = true;
-			}
-		}
-		
-		private void AddVerticalWalls(List<Cell> line)
-		{
-			for (int i = 0; i < line.Count - 1; i++)
-			{
-				var cell = line[i];
-				var nextCell = line[i + 1];
-				
-				if (cell.Set == nextCell.Set || _random.Next(0, 2) > 0)
+				for (int x = 0; x < _columnsCount; x++)
 				{
-					cell.Right = true;
-					nextCell.Left = true;
-				}
-				else
-				{
+					Console.WriteLine($"{y} {x}");
+					var cell = cells[y][x];
+					cell.Left = false;
 					cell.Right = false;
-					nextCell.Left = false;
-					UpdateSetForLine(nextCell.Set, cell.Set, line);
+					cell.Top = false;
+					cell.Bottom = false;
+					cell.Set = 0;
 				}
 			}
+
+			// Set outer walls
+			for (int y = 0; y < _rowsCount; y++)
+			{
+				cells[y][0].Left = true;
+				cells[y][_columnsCount - 1].Right = true;
+			}
+
+			for (int x = 0; x < _columnsCount; x++)
+			{
+				cells[0][x].Top = true;
+				cells[_rowsCount - 1][x].Bottom = true;
+			}
 		}
-		
-		private void AddHorizontalWalls(List<Cell> line)
+
+		private void CreateLine(List<List<Cell>> cells, int rowIndex)
 		{
-			// First pass: randomly decide to add bottom walls
-			for (int i = 0; i < line.Count; i++)
+			if (rowIndex == 0)
 			{
-				if (_random.Next(0, 2) > 0)
-				{
-					line[i].Bottom = true;  // Keep the wall
-				}
-				else
-				{
-					line[i].Bottom = false;  // Remove the wall (create passage)
-				}
+				FillFirstLine(cells[rowIndex]);
 			}
-			
-			// Second pass: ensure each set has at least one opening down
-			var sets = line.GroupBy(c => c.Set);
-			foreach (var set in sets)
+			else
 			{
-				// If all cells in this set have bottom walls, remove one randomly
-				if (set.All(c => c.Bottom))
-				{
-					var cellsInSet = set.ToList();
-					var randomCell = cellsInSet[_random.Next(cellsInSet.Count)];
-					randomCell.Bottom = false;
-				}
+				FillCommonLine(cells[rowIndex], row: rowIndex);
+			}
+
+			if (rowIndex == _rowsCount - 1)
+			{
+				FillLastLine(cells[rowIndex]);
 			}
 		}
-		
-		private void PolishLastLine(List<Cell> line)
+
+		private void FillLastLine(List<Cell> line)
 		{
 			for (int i = 0; i < _columnsCount - 1; i++)
 			{
 				var cell = line[i];
 				var nextCell = line[i + 1];
-				
+
 				if (cell.Set != nextCell.Set)
-				{
 					cell.Right = false;
-					nextCell.Left = false;
-				}
 			}
-			
+
 			int set = line[0].Set;
-			
+
 			foreach (var cell in line)
 			{
 				cell.Set = set;
 				cell.Bottom = true;
 			}
 		}
-		
+
+		private void FillCommonLine(List<Cell> line, int row)
+		{
+			List<Cell> tmp = CopyAndPrepareLine(_cells[row - 1]);
+
+			for (int i = 0; i < line.Count; i++) 
+				line[i] = tmp[i];
+			
+			AddVerticalWalls(line);
+			AddHorizontalWalls(line);
+		}
+
+		private void FillFirstLine(List<Cell> line)
+		{
+			for (int i = 0; i < _columnsCount; i++)
+			{
+				var cell = new Cell(i);
+
+				if (i == 0)
+					cell.Left = true;
+				else if (i == _columnsCount - 1)
+					cell.Right = true;
+
+				cell.Top = true;
+
+				line.Add(cell);
+			}
+
+			AddVerticalWalls(line);
+			AddHorizontalWalls(line);
+		}
+
+		private void AddHorizontalWalls(List<Cell> line)
+		{
+			for (int i = 0; i < line.Count; i++)
+			{
+				if (_random.Next(0, 2) > 0 &&
+					CanAddBottomToCellOfSet(line[i]))
+				{
+					line[i].Bottom = true;
+				}
+			}
+
+			bool CanAddBottomToCellOfSet(Cell cell) =>
+				!line.Where(c => c.Set == cell.Set && c != cell).All(c => c.Bottom);
+		}
+
+		private void AddVerticalWalls(List<Cell> line)
+		{
+			for (int i = 0; i < line.Count - 1; i++)
+			{
+				var cell = line[i];
+				var nextCell = line[i + 1];
+
+				if (cell.Set == nextCell.Set || _random.Next(0, 2) > 0)
+					cell.Right = true;
+				else
+					UpdateSetForLine(nextCell.Set, cell.Set, line);
+			}
+		}
+
+		private List<Cell> CopyAndPrepareLine(List<Cell> from)
+		{
+			List<Cell> line = new List<Cell>(_columnsCount);
+
+			foreach (var prevCell in from)
+			{
+				var cell = new Cell(prevCell);
+				line.Add(cell);
+			}
+
+			for (int i = 0; i < line.Count; i++)
+			{
+				if (line[i].Set == -1)
+					line[i].Set = GetEmptySetNumber(line);
+
+				if (i == 0)
+					line[i].Left = true;
+
+				if (i == _columnsCount - 1)
+					line[i].Right = true;
+			}
+
+			return line;
+		}
+
 		private int GetEmptySetNumber(List<Cell> line)
 		{
 			int setNumber = 0;
-			
+
 			while (setNumber < _columnsCount)
 			{
 				if (line.Any(c => c.Set == setNumber))
@@ -169,11 +198,13 @@ namespace MazeGenerator.Algorithms
 				else
 					break;
 			}
-			
+
 			return setNumber;
 		}
-		
-		private void UpdateSetForLine(int oldSet, int newSet, List<Cell> line)
+
+		private void UpdateSetForLine(int oldSet,
+			int newSet,
+			List<Cell> line)
 		{
 			foreach (var cell in line)
 			{
